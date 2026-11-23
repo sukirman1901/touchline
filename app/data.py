@@ -7,7 +7,7 @@ from fractions import Fraction
 def probe(path):
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_streams", "-show_format",
-         "-of", "json", str(path)], check=True, capture_output=True, text=True)
+         "-of", "json", str(path)], check=True, capture_output=True, text=True, timeout=30)
     info = json.loads(result.stdout)
     video = next(s for s in info["streams"] if s["codec_type"] == "video")
     return dict(width=video["width"], height=video["height"],

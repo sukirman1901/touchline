@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Touchline — Proyek video</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/home.css">
+  <script src="/home.js" defer></script>
+</head>
+<body class="home">
+  <a class="skip-link" href="#main">Ke proyek video</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Touchline beranda">touchline<span>.</span></a>
+    <span class="breadcrumb">Proyek</span>
+    <div class="top-actions"><span class="local-status"><i></i> Tersimpan lokal</span></div>
+  </header>
+  <main id="main" class="home-main">
+    <div class="project-heading">
+      <div class="project-identity"><h1>Proyek video</h1>
+        <span class="subtitle">Upload atau gunakan link YouTube</span></div>
+    </div>
+    <div class="intake-grid">
+    <section class="intake-panel" aria-labelledby="intake-title">
+      <div class="panel-heading"><h2 id="intake-title">Analisis baru</h2>
+        <button id="new-source" class="quiet" hidden>Tambah video lain</button></div>
+    <ol class="intake-steps" aria-label="Tahapan analisis">
+      <li aria-current="step" id="step-source"><span>01</span> Sumber video</li>
+      <li id="step-preview"><span>02</span> Pilih klip</li>
+      <li id="step-analysis"><span>03</span> Analisis & review</li>
+    </ol>
+      <div id="source-form">
+        <div class="source-switch" role="group" aria-label="Sumber video">
+          <button id="upload-tab" aria-pressed="true" aria-controls="upload-pane">Upload video</button>
+          <button id="youtube-tab" aria-pressed="false" aria-controls="youtube-pane">Link YouTube</button>
+        </div>
+        <div id="upload-pane">
+          <div id="dropzone" class="dropzone">
+            <svg class="icon upload-icon" aria-hidden="true"><use href="/icons.svg#film"/></svg>
+            <h3>Tarik file video ke sini</h3>
+            <p>MP4, MOV, MKV, atau WebM · maksimal 2 GB</p>
+            <label class="file-picker" for="video-file">Pilih file video</label>
+            <input id="video-file" class="sr-only" type="file" accept="video/*,.mkv">
+          </div>
+        </div>
+        <form id="youtube-pane" hidden>
+          <label for="youtube-url">Link video YouTube</label>
+          <div class="url-row"><input id="youtube-url" type="url" placeholder="https://www.youtube.com/watch?v=…" required>
+            <button class="primary" id="youtube-submit" type="submit">Ambil video</button></div>
+          <p class="field-help">Satu video, bukan playlist. Video diunduh ke Mac sebelum dianalisis.</p>
+        </form>
+      </div>
+      <div id="job-panel" hidden aria-live="polite">
+        <div class="job-heading"><div><h3 id="job-name"></h3><p id="job-status"></p></div><span id="job-percent"></span></div>
+        <progress id="job-progress" max="100" aria-label="Progres pemrosesan video"></progress>
+        <p id="job-help" class="field-help">Server harus tetap berjalan. Kamu boleh membuka proyek lain.</p>
+      </div>
+      <p id="intake-error" class="intake-error" role="alert" hidden></p>
+      <button id="retry-job" class="secondary" hidden>Coba lagi</button>
+      <div id="preview-panel" hidden>
+        <div class="preview-grid">
+          <div class="preview-screen"><video id="source-preview" controls playsinline preload="metadata"></video></div>
+          <form id="clip-form">
+            <p class="eyebrow">RENTANG ANALISIS</p>
+            <h3 id="preview-name"></h3>
+            <p id="preview-meta" class="field-help"></p>
+            <div class="clip-inputs">
+              <label for="clip-start">Mulai (detik)<input id="clip-start" type="number" min="0" step=".1" value="0" required></label>
+              <label for="clip-end">Selesai (detik)<input id="clip-end" type="number" min="0" step=".1" required></label>
+            </div>
+            <button type="button" id="use-playhead" class="quiet">Gunakan posisi video sebagai awal</button>
+            <p id="clip-summary" class="field-help"></p>
+            <button type="submit" id="analyze-submit" class="primary">Mulai analisis</button>
+            <p class="field-help">Mulai dengan klip pendek. Deteksi dan tracking di CPU dapat memerlukan beberapa menit.</p>
+          </form>
+        </div>
+      </div>
+      <div id="ready-panel" hidden><h3>Hasil siap ditinjau.</h3>
+        <p>Periksa kandidat kejadian sebelum memasukkannya ke ekspor.</p>
+        <a id="open-workspace" class="button-link primary-link" href="/workspace">Buka ruang analisis <span aria-hidden="true">→</span></a></div>
+    </section>
+    <section class="saved-projects" aria-labelledby="saved-title">
+      <div class="saved-heading"><h2 id="saved-title">Proyek tersimpan</h2><button id="refresh-projects" class="quiet">Muat ulang</button></div>
+      <p id="projects-empty" class="field-help">Memuat proyek…</p>
+      <ul id="project-list" class="project-list"></ul>
+    </section>
+    </div>
+    <footer class="home-footer"><span>Touchline · ruang review lokal</span><span>Hasil otomatis adalah kandidat, bukan keputusan final.</span></footer>
+  </main>
+</body>
+</html>

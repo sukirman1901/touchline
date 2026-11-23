@@ -1,6 +1,9 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const video = $("video");
+const projectId = new URLSearchParams(location.search).get("project") || "legacy";
+const projectUrl = path => `${path}${path.includes("?") ? "&" : "?"}project=${encodeURIComponent(projectId)}`;
+const exportKey = `touchline.export.${projectId}`;
 const state = {project: null, events: [], filter: "all", draft: null, marking: null, groups: new Map()};
 const outcomes = {completed: "Sampai ke rekan", intercepted: "Dipotong lawan", out: "Keluar lapangan", unknown: "Belum diketahui"};
 const colors = {completed: "#64d494", intercepted: "#ff6b67", out: "#ff6b67", unknown: "#ffb04e"};
@@ -21,7 +24,7 @@ function notify(message) {
   toastTimer = setTimeout(() => { $("toast").hidden = true; }, 3500);
 }
 async function api(path, body) {
-  const response = await fetch(path, body === undefined ? {} : {
+  const response = await fetch(projectUrl(path), body === undefined ? {} : {
     method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)
   });
   const data = await response.json();
@@ -148,7 +151,7 @@ function draw() {
   $("current-time").textContent = time(timestamp, true);
   $("seek").value = timestamp;
   $("playhead").style.left = `${Math.min(100, timestamp / (state.project?.duration || 75) * 100)}%`;
-  const sourceSeconds = Math.floor(timestamp + (state.project?.sourceOffset || 5910));
+  const sourceSeconds = Math.floor(timestamp + (state.project?.sourceOffset ?? 5910));
   $("source-time").textContent = `SUMBER ${Math.floor(sourceSeconds / 3600).toString().padStart(2, "0")}:${time(sourceSeconds % 3600)}`;
   const group = shape("g", {});
   const map = $("pitch-map");
@@ -445,11 +448,11 @@ $("fullscreen").onclick = async () => {
 };
 video.onplay = () => { $("play").replaceChildren(icon("pause")); $("play").setAttribute("aria-label", "Jeda video"); };
 video.onpause = () => { $("play").replaceChildren(icon("play")); $("play").setAttribute("aria-label", "Putar video"); };
-video.onloadedmetadata = () => { $("play").disabled = false; seek(2); };
+video.onloadedmetadata = () => { $("play").disabled = false; seek(Math.min(2, video.duration / 10)); };
 video.onerror = () => {
   $("load-state").hidden = false;
   $("load-state").classList.add("error");
-  $("load-state").textContent = "Video gagal dimuat. Pastikan server berjalan dan file sumber tersedia di Downloads.";
+  $("load-state").textContent = "Video gagal dimuat. Pastikan server berjalan, lalu buka kembali proyek dari beranda.";
 };
 video.addEventListener("timeupdate", draw);
 video.addEventListener("seeked", draw);
@@ -480,7 +483,7 @@ async function checkExport(id) {
       $("download").href = job.url;
       $("download").hidden = false;
       $("export-submit").disabled = false;
-      localStorage.removeItem("touchline.export");
+      localStorage.removeItem(exportKey);
     } else if (job.state === "error") {
       throw new Error(job.error);
     } else {
@@ -490,7 +493,7 @@ async function checkExport(id) {
   } catch (error) {
     $("export-status").textContent = `Ekspor berhenti: ${error.message}`;
     $("export-submit").disabled = false;
-    localStorage.removeItem("touchline.export");
+    localStorage.removeItem(exportKey);
   }
 }
 $("export-form").onsubmit = async event => {
@@ -500,7 +503,7 @@ $("export-form").onsubmit = async event => {
   $("export-status").textContent = "Menyiapkan video…";
   try {
     const job = await api("/api/export", {start: Number($("export-start").value), end: Number($("export-end").value)});
-    localStorage.setItem("touchline.export", job.id);
+    localStorage.setItem(exportKey, job.id);
     clearTimeout(exportPoll);
     checkExport(job.id);
   } catch (error) {
@@ -511,6 +514,18 @@ $("export-form").onsubmit = async event => {
 async function init() {
   try {
     state.project = await api("/api/project");
+    document.title = `Touchline — ${state.project.name}`;
+    $("project-name").textContent = state.project.name;
+    $("project-subtitle").textContent = `${state.project.clip} · ${time(state.project.duration)} video`;
+    $("breadcrumb-name").textContent = state.project.name;
+    $("total-time").textContent = ` / ${time(state.project.duration, true)}`;
+    document.querySelectorAll(".timeline-ruler span").forEach((node, index) => {
+      node.textContent = time(state.project.duration * index / 5);
+    });
+    $("stage").style.aspectRatio = `${state.project.width} / ${state.project.height}`;
+    $("overlay").setAttribute("preserveAspectRatio", "none");
+    video.setAttribute("aria-label", state.project.name);
+    video.src = projectUrl("/media");
     state.events = state.project.events;
     for (const row of state.project.observations) {
       if (!state.groups.has(row.frame)) state.groups.set(row.frame, []);
@@ -526,17 +541,21 @@ async function init() {
     $("export-open").disabled = false;
     $("new-event").disabled = false;
     for (let index = 0; index < 10; index++) {
-      const timestamp = index * 7.5;
+      const timestamp = index * state.project.duration / 10;
       const thumb = element("button", {class: "film-frame", title: time(timestamp, true),
         "aria-label": `Ke cuplikan ${time(timestamp, true)}`});
       thumb.style.backgroundPosition = `${index * 100 / 9}% center`;
+      if (projectId !== "legacy") {
+        thumb.style.backgroundImage = "none";
+        thumb.textContent = time(timestamp);
+      }
       thumb.onclick = () => { video.pause(); seek(timestamp); };
       $("filmstrip").append(thumb);
     }
     renderStats(state.project.stats);
     renderEvents();
-    if (video.readyState >= 1) { $("play").disabled = false; seek(2); }
-    const job = localStorage.getItem("touchline.export");
+    if (video.readyState >= 1) { $("play").disabled = false; seek(Math.min(2, video.duration / 10)); }
+    const job = localStorage.getItem(exportKey);
     if (job) { $("export-submit").disabled = true; checkExport(job); }
   } catch (error) {
     $("load-state").textContent = `Gagal memuat proyek: ${error.message}. Muat ulang untuk mencoba lagi.`;

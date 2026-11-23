@@ -1,0 +1,79 @@
+/* Intake uses the same full-width shell, density and tokens as the workstation. */
+.home-main {padding:0;max-width:none;margin:0}
+.intake-grid {display:grid;grid-template-columns:minmax(0,1fr) 320px;border-top:1px solid var(--border);min-height:calc(100vh - 166px)}
+.intake-panel {min-width:0;padding:20px;background:var(--surface)}
+.panel-heading,.saved-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:28px}
+.home h2,.home h3 {font-size:13px;font-weight:600}
+.intake-steps {display:flex;list-style:none;gap:28px;padding:0;margin:18px 0 24px;border-bottom:1px solid var(--border)}
+.intake-steps li {display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;padding:10px 0;border-bottom:2px solid transparent}
+.intake-steps li span {font:10px var(--mono);color:var(--muted)}
+.intake-steps li[aria-current] {color:var(--text);border-bottom-color:var(--accent)}
+.source-switch {display:flex;gap:4px;margin-bottom:16px}
+.source-switch button {min-height:32px;font-size:12px;background:transparent;border-color:transparent}
+.source-switch button[aria-pressed=true] {background:var(--raised);border-color:var(--border);font-weight:600}
+.dropzone {min-height:244px;border:1px dashed #b7bcb1;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center}
+.dropzone.dragging {border-color:#a7680f;background:var(--selected)}
+.dropzone p,.field-help {font-size:12px;color:var(--muted)}
+.upload-icon {width:24px;height:24px;color:var(--muted);margin-bottom:4px}
+.file-picker,.button-link {display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;text-decoration:none;font-weight:500;cursor:pointer;min-height:34px;background:var(--surface)}
+.file-picker {background:var(--accent);border-color:transparent;color:var(--accent-ink);font-weight:600}
+.file-picker:hover {background:var(--accent-hover)}
+.dropzone:focus-within {outline:2px solid #a7680f;outline-offset:3px}
+.url-row {display:flex;gap:12px;margin:8px 0 12px}
+.home input:not([type=file]) {width:100%;min-width:0;min-height:36px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text)}
+.url-row input {flex:1}
+#youtube-pane {padding:12px 0 24px}
+.job-heading {display:flex;justify-content:space-between;gap:16px;margin:24px 0 14px}
+.job-heading h3 {overflow-wrap:anywhere;margin-bottom:6px}
+#job-percent {font:12px var(--mono);white-space:nowrap}
+.home progress {width:100%;height:7px;accent-color:#b97b21;display:block;margin:12px 0 16px}
+.intake-error {margin:16px 0;color:var(--danger);border-left:2px solid var(--danger);padding:8px 12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;background:#fff9f8}
+.preview-grid {display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px}
+.preview-screen {background:var(--viewer);align-self:start;overflow:hidden}
+.preview-screen video {aspect-ratio:16/9;max-height:480px}
+.eyebrow {font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px}
+#clip-form h3 {margin-bottom:8px;overflow-wrap:anywhere}
+.clip-inputs {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.clip-inputs label {display:flex;flex-direction:column;gap:6px;font-size:12px}
+#use-playhead {font-size:11px;padding:7px 0;margin:4px 0 8px;white-space:normal;text-align:left}
+#analyze-submit {margin:16px 0 12px;width:100%;min-height:36px}
+#ready-panel {padding:20px 0}
+#ready-panel p {margin:8px 0 16px;color:var(--muted)}
+.primary-link {background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.saved-projects {margin:0;min-width:0;padding:16px;border-left:1px solid var(--border);background:var(--bg)}
+.saved-heading button {font-size:11px;padding:4px 6px}
+.project-list {list-style:none;padding:0;margin:12px 0 0}
+.project-row {display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px 10px;padding:16px 0;border-top:1px solid var(--border);align-items:start}
+.project-symbol {display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--border);background:var(--surface);border-radius:3px}
+.project-symbol .icon {width:14px;height:14px}
+.project-copy {min-width:0}
+.project-copy h3 {overflow-wrap:anywhere;font-size:12px}
+.project-copy p {font-size:11px;color:var(--muted);margin-top:4px}
+.project-state {grid-column:2;font-size:11px;color:var(--muted)}
+.project-row a,.project-row button {grid-column:2;justify-self:start;min-height:30px;font-size:11px}
+.home-footer {display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--border);padding:12px 20px;color:var(--muted);font-size:10px}
+@media(max-width:1199px) {.preview-grid{grid-template-columns:1fr}}
+@media(max-width:900px) {.intake-grid{grid-template-columns:minmax(0,1fr) 280px}.intake-steps{gap:16px}.intake-steps li{font-size:11px}}
+@media(max-width:767px) {
+  .intake-grid{grid-template-columns:1fr;min-height:0}
+  .intake-panel{padding:16px}
+  .saved-projects{border-left:0;border-top:1px solid var(--border);padding:16px}
+  .home .project-identity{flex-direction:column;align-items:flex-start;gap:5px}
+  .home-footer{flex-direction:column;gap:6px;padding:12px 16px}
+  .file-picker,.primary-link,#youtube-submit{width:100%}
+  .file-picker{max-width:none}
+  .url-row{flex-direction:column}
+  .project-row{grid-template-columns:28px minmax(0,1fr) auto;align-items:center}
+  .project-row a,.project-row button{grid-column:3;grid-row:1/3}
+  .project-state{grid-column:2}
+}
+@media(max-width:420px) {
+  .intake-steps{gap:12px}.intake-steps li{font-size:10px;gap:5px}
+  .dropzone{padding:20px 12px}
+  .home .subtitle{white-space:normal}
+  .project-row{grid-template-columns:minmax(0,1fr) auto}
+  .project-symbol{display:none}
+  .project-state{grid-column:1}
+  .project-row a,.project-row button{grid-column:2}
+}
+@media(prefers-reduced-motion:reduce) {.home *{transition:none!important;scroll-behavior:auto!important}}

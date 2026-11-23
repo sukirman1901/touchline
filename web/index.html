@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Touchline — Persibo vs Gresik United</title>
+  <title>Touchline — Ruang analisis</title>
   <link rel="stylesheet" href="/styles.css">
   <script src="/dropdown.js" defer></script>
   <script src="/app.js" defer></script>
@@ -13,7 +13,7 @@
   <a class="skip-link" href="#workspace">Ke ruang analisis</a>
   <header class="topbar">
     <a class="brand" href="/" aria-label="Touchline beranda">touchline<span>.</span></a>
-    <span class="breadcrumb">Pertandingan <span aria-hidden="true">/</span> Persibo – Gresik United</span>
+    <span class="breadcrumb"><a href="/">Proyek</a> <span aria-hidden="true">/</span> <span id="breadcrumb-name">Memuat…</span></span>
     <div class="top-actions">
       <span class="local-status"><i></i> Tersimpan lokal</span>
       <button id="help-button" class="icon-button" aria-label="Panduan" title="Panduan"><svg class="icon" aria-hidden="true"><use href="/icons.svg#helpcircle"/></svg></button>
@@ -21,7 +21,7 @@
   </header>
   <main id="workspace">
     <div class="project-heading">
-      <div class="project-identity"><h1>Persibo <span>vs</span> Gresik United</h1><span class="subtitle">Klip 01 <span>·</span> 01:38:30–01:39:45</span></div>
+      <div class="project-identity"><h1 id="project-name">Memuat proyek…</h1><span id="project-subtitle" class="subtitle"></span></div>
       <button id="export-open" class="secondary" disabled><svg class="icon" aria-hidden="true"><use href="/icons.svg#export"/></svg>Ekspor video</button>
     </div>
     <div id="load-state" class="notice" role="status">Memuat video dan observasi…</div>
@@ -37,7 +37,7 @@
             <span class="media-spec" id="analysis-status" role="status">AI · menunggu hasil</span>
           </div>
           <div id="stage" tabindex="0" aria-label="Video analisis. Saat penandaan aktif, klik posisi pada video atau gunakan input koordinat di panel." role="group">
-            <video id="video" preload="metadata" playsinline src="/media" aria-label="Video Persibo melawan Gresik United"></video>
+            <video id="video" preload="metadata" playsinline aria-label="Video proyek"></video>
             <svg id="overlay" viewBox="0 0 1280 720" aria-hidden="true"></svg>
             <div id="mark-instruction" hidden></div>
           </div>
@@ -47,7 +47,7 @@
               <button id="play" class="play-button icon-button" aria-label="Putar video" title="Putar / jeda (Space)" disabled><svg class="icon" aria-hidden="true"><use href="/icons.svg#play"/></svg></button>
               <button id="forward" class="icon-button" aria-label="Maju satu frame" title="Maju satu frame (→)"><svg class="icon" aria-hidden="true"><use href="/icons.svg#next"/></svg></button>
             </div>
-            <span class="timecode"><span id="current-time">00:00.00</span><span class="muted"> / 01:15.00</span></span>
+            <span class="timecode"><span id="current-time">00:00.00</span><span id="total-time" class="muted"></span></span>
             <div class="transport-right">
               <label class="sr-only" for="speed">Kecepatan putar</label>
               <select id="speed"><option value=".25">0.25×</option><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>

@@ -67,6 +67,34 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(result["events"], [])
         self.assertEqual(result["status"], "source-mismatch")
 
+    def test_project_media_and_analysis_are_isolated(self):
+        for char, name in [("a", "First"), ("b", "Second")]:
+            identifier = char * 32
+            root = Path(self.tmp.name) / "data/projects" / identifier
+            (root / "data").mkdir(parents=True)
+            (root / "clip.mp4").write_bytes(name.encode())
+            (root / "project.json").write_text(json.dumps(dict(id=identifier, name=name,
+                state="ready", source="upload", created=1, start=0, identity=name,
+                clip_meta=dict(duration=5, fps=30, width=640, height=360))))
+            (root / "data/automatic.json").write_text(json.dumps(dict(identity=name,
+                status="ready", owners=[], balls=[], events=[])))
+        for char, name in [("a", "First"), ("b", "Second"), ("a", "First")]:
+            query = "?project=" + char * 32
+            result = json.loads(self.request("/api/project" + query)[2])
+            self.assertEqual(result["name"], name)
+            self.assertEqual(result["automatic"]["identity"], name)
+            self.assertEqual(self.request("/media" + query)[2], name.encode())
+        self.assertEqual(self.request("/media?project=missing")[0], 400)
+
+    def test_cross_origin_upload_is_rejected_before_reading_body(self):
+        connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port)
+        connection.request("POST", "/api/projects/upload", b"video",
+                           {"Origin": "https://example.com", "Content-Type": "application/octet-stream"})
+        response = connection.getresponse()
+        self.assertEqual(response.status, 400)
+        self.assertIn("Origin", response.read().decode())
+        connection.close()
+
 
 if __name__ == "__main__":
     unittest.main()
