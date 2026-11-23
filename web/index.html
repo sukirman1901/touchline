@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Touchline — Ruang analisis pelatih</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Ke ruang analisis</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Touchline beranda"><span class="brand-mark" aria-hidden="true">t/</span> TOUCHLINE<span class="edition">COACHING WORKSPACE</span></a>
+    <div class="top-actions"><span class="local-status"><i></i> Lokal di Mac</span><button id="help-button" class="quiet">Panduan</button></div>
+  </header>
+  <main id="workspace">
+    <div class="project-heading">
+      <div><div class="eyebrow">RUANG ANALISIS <span>/</span> PERTANDINGAN 001</div><h1>Persibo <span>vs</span> Gresik United</h1><p class="subtitle">Gol 1 · Sehabudin <span>·</span> Klip 75 detik <span>·</span> 720p / 30 fps</p></div>
+      <button id="export-open" class="secondary" disabled>Ekspor video</button>
+    </div>
+    <div id="load-state" class="notice" role="status">Memuat klip dan observasi pemain…</div>
+    <div class="workspace-grid">
+      <section class="review-column" aria-label="Video dan timeline">
+        <div class="player-panel">
+          <div class="panel-bar"><span class="eyebrow">MATCH REVIEW</span><span class="mono" id="source-time">SUMBER 01:38:30</span></div>
+          <div id="stage" tabindex="0" aria-label="Video analisis. Saat penandaan aktif, klik posisi pada video atau gunakan input koordinat di panel." role="group">
+            <video id="video" preload="metadata" playsinline src="/media" aria-label="Video Persibo melawan Gresik United"></video>
+            <svg id="overlay" viewBox="0 0 1280 720" aria-hidden="true"></svg>
+            <span class="video-badge">PERSIBO <b>×</b> GRESIK UNITED</span>
+            <div id="mark-instruction" hidden></div>
+          </div>
+          <div class="transport">
+            <button id="play" class="play-button" aria-label="Putar video" disabled>Putar</button>
+            <button id="back" class="quiet" aria-label="Mundur satu frame">−1f</button>
+            <button id="forward" class="quiet" aria-label="Maju satu frame">+1f</button>
+            <span class="timecode mono"><span id="current-time">00:00.00</span><span class="muted"> / 01:15</span></span>
+            <div class="transport-right"><label class="sr-only" for="speed">Kecepatan putar</label><select id="speed"><option value=".25">0.25×</option><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select><button id="mute" class="quiet" aria-pressed="true">Suara mati</button></div>
+          </div>
+          <div class="scrubber"><label class="sr-only" for="seek">Posisi video dalam detik</label><input type="range" id="seek" min="0" max="75" step=".033333" value="0"></div>
+          <div class="overlay-toolbar"><span class="muted">Tampilkan</span><label><input id="show-tracks" type="checkbox" checked> Observasi AI</label><label><input id="show-events" type="checkbox" checked> Anotasi pelatih</label><span class="legend"><i class="dot cluster-a"></i> Cluster A <i class="dot cluster-b"></i> Cluster B</span></div>
+        </div>
+
+        <section class="timeline-panel" aria-labelledby="timeline-heading">
+          <div class="section-heading"><div><h2 id="timeline-heading">Timeline kejadian <span class="count" id="event-count">0</span></h2><p>Klik kejadian untuk meninjau momen aslinya.</p></div><button id="new-event" class="primary" disabled>+ Tandai kejadian</button></div>
+          <div class="timeline-ruler"><span>00:00</span><span>00:15</span><span>00:30</span><span>00:45</span><span>01:00</span><span>01:15</span></div>
+          <div id="timeline-track" aria-label="Penanda kejadian"><div id="playhead"></div><div id="timeline-markers"></div></div>
+          <div class="filter-row" role="group" aria-label="Filter kejadian"><button data-filter="all" aria-pressed="true">Semua</button><button data-filter="pass" aria-pressed="false">Umpan</button><button data-filter="possession" aria-pressed="false">Penguasaan</button><button data-filter="unreviewed" aria-pressed="false">Belum direview</button></div>
+          <div id="event-list"><div class="empty-state"><span class="empty-number">01</span><div><h3>Mulai dari satu momen.</h3><p>Putar video, berhenti saat bola dilepas, lalu tandai pengumpan dan penerimanya.</p></div></div></div>
+        </section>
+      </section>
+
+      <aside class="inspector" aria-label="Panel pelatih">
+        <section id="overview">
+          <div class="panel-bar"><h2>Catatan pelatih</h2><span class="small-tag">SESI LOKAL</span></div>
+          <div class="overview-inner">
+            <div class="overview-title"><span class="eyebrow">DARI VIDEO KE KEPUTUSAN</span><h3>Lihat momennya.<br>Pahami pilihannya.</h3><p>Susun bukti visual sebelum menilai sebuah umpan.</p></div>
+            <div class="metric-grid"><div><span id="stat-total">0</span><small>Umpan ditandai</small></div><div><span id="stat-completion">—</span><small>Sukses · hasil terverifikasi</small></div></div>
+            <p id="stat-context" class="small muted">Belum ada umpan yang dikonfirmasi.</p>
+            <div class="quality-note"><span class="eyebrow">KUALITAS OBSERVASI</span><strong id="coverage">Memuat…</strong><p>Model awal sering kehilangan bola. Penguasaan dan hasil umpan perlu ditandai atau dikoreksi pelatih.</p></div>
+            <ol class="steps"><li><span>1</span><div><strong>Pilih momen</strong><p>Jeda saat awal kejadian.</p></div></li><li><span>2</span><div><strong>Tandai dua posisi</strong><p>Pengumpan dan penerima, beserta waktunya.</p></div></li><li><span>3</span><div><strong>Review & bagikan</strong><p>Konfirmasi hasil, lalu ekspor anotasi.</p></div></li></ol>
+            <div class="keyboard-note"><kbd>Space</kbd> Putar / jeda <span>·</span> <kbd>←</kbd><kbd>→</kbd> Satu frame</div>
+          </div>
+        </section>
+        <section id="editor" hidden>
+          <div class="panel-bar"><h2 id="editor-heading">Tandai kejadian</h2><button id="cancel-edit" class="quiet">Tutup</button></div>
+          <form id="event-form" class="editor-inner">
+            <label for="kind">Jenis kejadian</label><select id="kind"><option value="pass">Umpan</option><option value="possession">Penguasaan bola</option></select>
+            <div class="mark-card"><span class="eyebrow">01 / AWAL</span><button type="button" id="mark-source" class="position-button">Pilih posisi awal di video</button><label for="start">Waktu awal (detik klip)</label><input id="start" type="number" step=".001" min="0" required></div>
+            <div class="mark-card"><span class="eyebrow">02 / AKHIR</span><button type="button" id="mark-target" class="position-button">Pilih posisi akhir di video</button><label for="end">Waktu akhir (detik klip)</label><input id="end" type="number" step=".001" min="0" required></div>
+            <p class="small muted" id="geometry-note">Garis menghubungkan dua titik yang Anda tandai. Bukan rekonstruksi lintasan bola.</p>
+            <details class="coordinates"><summary>Edit koordinat tanpa klik video</summary><div class="coordinate-grid"><label>X awal (%)<input id="sx" type="number" min="0" max="100" step=".1"></label><label>Y awal (%)<input id="sy" type="number" min="0" max="100" step=".1"></label><label>X akhir (%)<input id="tx" type="number" min="0" max="100" step=".1"></label><label>Y akhir (%)<input id="ty" type="number" min="0" max="100" step=".1"></label></div></details>
+            <label for="player">Pemain / identitas <span class="muted">(opsional)</span></label><input id="player" type="text" maxlength="100" placeholder="Contoh: nomor 8 / Track 12">
+            <div id="outcome-field"><label for="outcome">Hasil umpan</label><select id="outcome"><option value="unknown">Belum diketahui</option><option value="completed">Sampai ke rekan</option><option value="intercepted">Dipotong lawan</option><option value="out">Keluar lapangan</option></select></div>
+            <label for="note">Catatan taktis <span class="muted">(opsional)</span></label><textarea id="note" rows="3" maxlength="2000" placeholder="Apa yang terlihat? Tekanan lawan, pilihan penerima…"></textarea>
+            <label class="review-check"><input id="reviewed" type="checkbox"> Sudah saya periksa di video</label>
+            <p id="form-error" class="error-text" role="alert" hidden></p>
+            <button class="primary save-button" id="save-event" type="submit">Simpan kejadian</button>
+            <button id="delete-event" class="danger" type="button" hidden>Hapus kejadian</button>
+          </form>
+        </section>
+      </aside>
+    </div>
+    <footer class="workspace-footer"><span>TOUCHLINE / PROTOTYPE 01</span><span>Observasi AI ≠ kejadian terverifikasi. Data tersimpan di Mac ini.</span></footer>
+  </main>
+  <dialog id="export-dialog" aria-labelledby="export-title"><form id="export-form"><div class="dialog-heading"><span class="eyebrow">BRIEFING PEMAIN</span><button type="button" class="quiet" id="export-close">Tutup</button></div><h2 id="export-title">Bawa analisis ke lapangan.</h2><p>Ekspor MP4 dengan anotasi yang sudah Anda periksa dan suara video asli. Observasi AI mentah tidak disertakan.</p><div class="coordinate-grid"><label>Dari detik<input type="number" id="export-start" min="0" step=".1" value="0" required></label><label>Sampai detik<input type="number" id="export-end" min="0" step=".1" value="75" required></label></div><p class="small muted">Waktu dibulatkan ke frame terdekat.</p><button id="export-submit" class="primary" type="submit">Buat video MP4</button><div id="export-status" role="status"></div><a id="download" class="download-link" download hidden>Unduh video hasil</a></form></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-heading"><span class="eyebrow">PANDUAN SINGKAT</span><button id="help-close" class="quiet">Tutup</button></div><h2 id="help-title">Satu momen, satu pembelajaran.</h2><ol class="help-steps"><li>Putar video lalu jeda. Pilih <strong>Tandai kejadian</strong>.</li><li>Klik <strong>Pilih posisi awal</strong>, lalu klik kaki pengumpan. Waktu video ikut dicatat.</li><li>Majukan video hingga bola diterima. Pilih posisi akhir, lalu klik penerima.</li><li>Pilih hasil umpan, beri catatan, dan centang bahwa kejadian sudah diperiksa.</li><li>Simpan. Klik kejadian di timeline untuk mengedit atau menontonnya lagi.</li></ol><p>Penguasaan bola menggunakan lingkaran yang bergerak di antara dua titik manual. Pecah menjadi beberapa kejadian jika arah berubah atau kamera berpindah. Ini belum tracking penguasaan otomatis.</p><p class="small muted">Track adalah ID sementara dari model, bukan nomor punggung. Warna cluster belum dipetakan ke tim. Jarak, kecepatan, dan akurasi keputusan belum dihitung.</p></dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>
