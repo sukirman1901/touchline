@@ -1,4 +1,5 @@
 import http.client
+import json
 import tempfile
 import threading
 import unittest
@@ -15,7 +16,7 @@ class ServerTests(unittest.TestCase):
         media = root / "clip.mp4"
         media.write_bytes(b"0123456789")
         context = dict(media=media, root=root, meta={"duration": 75}, observations=[],
-                       store=Store(root / "test.sqlite", 75), jobs={})
+                       store=Store(root / "test.sqlite", 75), jobs={}, identity="test-source")
         self.server = make_server(context, 0)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -45,6 +46,26 @@ class ServerTests(unittest.TestCase):
     def test_arbitrary_file_access_denied(self):
         self.assertEqual(self.request("/../../etc/passwd")[0], 404)
         self.assertEqual(self.request("/exports/../../etc/passwd")[0], 404)
+
+    def test_new_job_progress_preserves_previous_analysis(self):
+        data = Path(self.tmp.name) / "data"
+        data.mkdir()
+        (data / "automatic.json").write_text(json.dumps(dict(identity="test-source",
+            status="ready", owners=[], balls=[], events=[])))
+        (data / "automatic.status.json").write_text(json.dumps(dict(identity="test-source",
+            status="running", progress=42)))
+        result = json.loads(self.request("/api/analysis")[2])
+        self.assertEqual(result["status"], "ready")
+        self.assertEqual(result["job"]["progress"], 42)
+
+    def test_wrong_source_analysis_is_not_published(self):
+        data = Path(self.tmp.name) / "data"
+        data.mkdir()
+        (data / "automatic.json").write_text(json.dumps(dict(identity="another-video",
+            status="ready", owners=[], balls=[], events=[{"id": "wrong"}])))
+        result = json.loads(self.request("/api/analysis")[2])
+        self.assertEqual(result["events"], [])
+        self.assertEqual(result["status"], "source-mismatch")
 
 
 if __name__ == "__main__":

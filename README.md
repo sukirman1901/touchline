@@ -17,25 +17,84 @@ Python 3.11 dan FFmpeg diperlukan. Workspace hanya membutuhkan OpenCV dan NumPy;
 
 1. Putar video. `Space` untuk putar/jeda, tombol panah untuk melangkah satu frame.
 2. Pilih **Tandai kejadian** dan pilih umpan atau penguasaan.
-3. Klik **Pilih posisi awal**, lalu klik kaki pemain pada video. Posisi dan waktu dicatat.
+3. Untuk koreksi manual, klik **Pilih posisi awal**, lalu klik kaki pemain pada video. Posisi dan waktu dicatat.
 4. Majukan video, klik **Pilih posisi akhir**, lalu klik posisi penerima/akhir. Alternatif keyboard: buka **Edit koordinat tanpa klik video**.
 5. Pilih hasil umpan dan isi catatan. Centang **Sudah saya periksa di video** setelah review.
 6. Simpan. Kejadian bisa dibuka kembali lewat daftar atau penanda timeline.
 7. **Ekspor video** menghasilkan MP4 dengan anotasi terverifikasi dan audio asli. Draf, observasi AI mentah, serta antarmuka aplikasi tidak masuk ekspor.
 
-## Data dan batas versi awal
+## Analisis otomatis
+
+Jalankan pemrosesan offline pada klip lokal:
+
+```sh
+/Users/aaa/Downloads/.football-analyzer-py311/bin/python -m app.analyze
+```
+
+Deteksi pemain beresolusi tinggi dan empat tile bola diproses pada sekitar 10 fps.
+Model lokal: `~/Downloads/yolo11n.pt`. Lingkungan analyzer memerlukan Ultralytics,
+PyTorch dan Supervision yang sudah tersedia. Waktu proses bergantung CPU.
+
+Untuk evaluasi lokal dengan model sepak bola SoccArt yang sudah disimpan:
+
+```sh
+/Users/aaa/Downloads/.football-analyzer-py311/bin/python -m app.analyze --model data/models/players.pt --ball-model data/models/ball.pt --sample-fps 10
+```
+
+Asal dan hash model dicatat di `data/models/provenance.json`. Model khusus memakai
+detektor bola full-frame 640 dan kandidat bola dari model pemain 960. Filter
+kontinuitas menolak lompatan jauh dan kandidat di badan pemain; ini juga dapat
+melewatkan bola udara. Smoothing pemain dibatasi ID/segmen; interpolasi bola
+hanya mengisi celah pendek. UI menampilkan progres dan mempertahankan hasil
+sebelumnya selama pemrosesan. Bobot eksternal hanya untuk evaluasi lokal.
+
+Hasil tersimpan di `data/automatic.json`; `data/automatic.detections.json` menyimpan
+deteksi mentah untuk evaluasi ulang. Hash sumber diverifikasi server.
+Setelah proses selesai, refresh workspace:
+- Kandidat penguasaan dan umpan masuk timeline tanpa penandaan manual.
+- Cincin cyan mengikuti estimasi pembawa bola; segitiga menandai pemain tersebut.
+- Kandidat umpan menggunakan jejak bola pendek yang memudar.
+- Buka kejadian untuk memeriksa hasil, mengoreksi, atau menghapusnya.
+- Koreksi dan penghapusan tersimpan terpisah dari hasil detector.
+- Ekspor tetap hanya memasukkan kejadian yang telah diperiksa.
+
+## Data dan batas analisis
+
+### Pipeline terpadu (integrasi berlangsung)
+
+Skema hasil versi 2 menambahkan `teams`, `modules`, `players` dan `metrics`.
+Kelompok jersey memakai observasi torso dan median per track, bukan identitas
+klub terverifikasi. Kiper tanpa konfigurasi jersey khusus tetap belum bertim.
+Renderer pemain kini terpisah dari daftar kejadian; label `T` adalah ID track.
+
+Adapter landmark menerima `--pitch-model model-pose.pt --pitch-layout layout.json`.
+Layout harus cocok dengan **urutan indeks model**, dengan `length`, `width` dalam
+meter dan `points` berupa daftar `[x_m, y_m]`. Jangan menggunakan layout model
+lain meskipun jumlah titik sama. Bobot landmark belum tersedia lokal.
+
+Homography divalidasi sebelum speed/jarak, heatmap waktu, wilayah terdekat dan
+jalur umpan geometris dihitung. Modul-modul tersebut belum dievaluasi pada Persibo.
+UI minimap/speed menunggu kalibrasi valid; tampilan heatmap/territory dan ekspor
+lapisan semua pemain masih merupakan pekerjaan integrasi lanjutan.
 
 - `data/project.sqlite`: kejadian dan koreksi pelatih; tersimpan setelah reload.
 - `exports/`: MP4 hasil ekspor. Nama unik; file sumber tidak ditimpa.
 - Sumber: `~/Downloads/Gol_1_Persibo_Sehabudin.mp4`.
 - Observasi: `~/Downloads/tracking_Gol_1_Persibo_Sehabudin.csv`.
-- Ini workspace **review semi-manual**, bukan deteksi penguasaan dan operan otomatis.
+- Kandidat otomatis menggunakan heuristik kedekatan bola dan kontinuitas track.
+  Kedekatan tidak membuktikan penguasaan atau niat mengumpan. Hasil umpan tetap
+  unknown sampai diperiksa; statistik keberhasilan tidak dibuat dari tebakan.
 - Label gol/nama klip berasal dari skrip input, bukan hasil klasifikasi gol.
 - Warna Cluster A/B belum merupakan identitas tim terverifikasi. `T123` adalah track sementara, bukan nomor punggung.
-- Bola teramati di 87 dari 1.125 frame sampel (7,7%). Nilai ini adalah cakupan deteksi, bukan akurasi model.
-- Observasi pemain ditahan maksimal satu frame sumber yang dilewati. Tidak mengisi kehilangan bola panjang.
-- Garis umpan adalah hubungan dua titik manual pada gambar. Gerak kamera tidak dikompensasi; jangan menafsirkannya sebagai lintasan bola atau jarak fisik.
-- Lingkaran penguasaan bergerak linear di antara dua titik manual. Pecah interval untuk perubahan arah/kamera.
+- Baseline lama: bola teramati di 87 dari 1.125 frame sampel (7,7%). Hasil detector
+  baru melaporkan denominator dan jumlah tersaring sendiri; cakupan bukan akurasi.
+- Interpolasi overlay dibatasi 0,21 detik, ID pemain dan segmen kamera yang sama.
+  Deteksi cut menggunakan perubahan visual dan dapat melewatkan cut atau menandai
+  gerak cepat sebagai cut. Pelacakan dan filter belum dievaluasi pada ground truth.
+- Posisi merupakan koordinat gambar; belum ada kompensasi kamera/perspektif lapangan.
+  Estimasi possession memerlukan beberapa sampel konsisten dan menolak bola
+  diperebutkan. Cincin tidak dipertahankan saat bukti hilang.
+- Anotasi manual tetap memakai dua anchor; anotasi otomatis memakai lintasan sampel.
 - Persentase sukses hanya memakai umpan yang direview dengan hasil diketahui. Umpan unknown dan belum direview ditampilkan terpisah; kedua kelompok dapat beririsan.
 - Tidak ada homography, radar, speed, acceleration, identitas lintas cut, atau penilaian keputusan taktis otomatis.
 - Ekspor dibulatkan ke batas frame. Posisi overlay berbagi koordinat normalisasi yang sama dengan browser.

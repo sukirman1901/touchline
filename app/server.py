@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import mimetypes
 import re
@@ -18,6 +19,26 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def make_server(context, port=8876):
     lock = threading.Lock()
+    analysis_cache = {"stamp": None, "value": None}
+
+    def analysis():
+        path = context["root"] / "data/automatic.json"
+        status_path = path.with_suffix(".status.json")
+        job = json.loads(status_path.read_text()) if status_path.exists() else {}
+        if job.get("identity") not in {None, context.get("identity")}:
+            job = {}
+        if not path.exists():
+            return dict(status="pending", events=[], owners=[], balls=[], job=job)
+        stamp = path.stat().st_mtime_ns
+        if analysis_cache["stamp"] != stamp:
+            value = json.loads(path.read_text())
+            if value.get("identity") != context.get("identity"):
+                return dict(status="source-mismatch", events=[], owners=[], balls=[])
+            analysis_cache.update(stamp=stamp, value=value)
+        return dict(analysis_cache["value"], job=job)
+
+    def events():
+        return context["store"].merged(analysis()["events"])
 
     class Handler(BaseHTTPRequestHandler):
         def json(self, payload, status=200):
@@ -82,14 +103,16 @@ def make_server(context, port=8876):
         def do_GET(self):
             path = urlparse(self.path).path
             if path == "/api/project":
+                current = events()
                 self.json(dict(name="Persibo vs Gresik United", clip="Gol 1 · Sehabudin",
                                sourceOffset=5910, **context["meta"],
                                observations=context["observations"],
-                               events=context["store"].list(),
-                               stats=summary(context["store"].list())))
+                               automatic=analysis(), events=current, stats=summary(current)))
             elif path == "/api/events":
-                events = context["store"].list()
-                self.json(dict(events=events, stats=summary(events)))
+                current = events()
+                self.json(dict(events=current, stats=summary(current)))
+            elif path == "/api/analysis":
+                self.json(analysis())
             elif path.startswith("/api/jobs/"):
                 with lock:
                     job = dict(context["jobs"].get(path.rsplit("/", 1)[-1], {}))
@@ -98,7 +121,7 @@ def make_server(context, port=8876):
                 self.file(context["media"])
             elif re.fullmatch(r"/exports/[a-f0-9-]{36}\.mp4", path):
                 self.file(context["root"] / path.lstrip("/"))
-            elif path in {"/", "/app.js", "/styles.css"}:
+            elif path in {"/", "/app.js", "/dropdown.js", "/styles.css", "/icons.svg", "/filmstrip.jpg"}:
                 self.file(context["root"] / "web" / ("index.html" if path == "/" else path[1:]))
             else:
                 self.send_error(404)
@@ -123,7 +146,8 @@ def make_server(context, port=8876):
                 item = self.body()
                 path = urlparse(self.path).path
                 if path == "/api/events":
-                    self.json(context["store"].save(item), 201)
+                    original = next((event for event in events() if event["id"] == item.get("id")), None)
+                    self.json(context["store"].save(item, original), 201)
                 elif path == "/api/events/delete":
                     context["store"].delete(str(item.get("id", "")))
                     self.json({"ok": True})
@@ -131,7 +155,7 @@ def make_server(context, port=8876):
                     start, end = number(item.get("start")), number(item.get("end"))
                     if not 0 <= start < end <= context["meta"]["duration"]:
                         raise ValueError("Rentang ekspor tidak valid.")
-                    events = context["store"].list()
+                    export_events = events()
                     with lock:
                         if any(job["state"] == "running" for job in context["jobs"].values()):
                             self.json({"error": "Ekspor sebelumnya masih berjalan."}, 409)
@@ -144,7 +168,7 @@ def make_server(context, port=8876):
                     def worker():
                         try:
                             dest = context["root"] / "exports" / f"{identifier}.mp4"
-                            render_export(context["media"], dest, events, start, end, update)
+                            render_export(context["media"], dest, export_events, start, end, update)
                             with lock:
                                 context["jobs"][identifier].update(state="done", url=f"/exports/{identifier}.mp4")
                         except Exception as error:
@@ -168,6 +192,7 @@ def main():
     csv = Path.home() / "Downloads/tracking_Gol_1_Persibo_Sehabudin.csv"
     meta = probe(media)
     context = dict(root=ROOT, media=media, meta=meta, jobs={},
+                   identity=hashlib.sha256(media.read_bytes()).hexdigest(),
                    observations=load_observations(csv, meta["width"], meta["height"], meta["fps"]),
                    store=Store(ROOT / "data/project.sqlite", meta["duration"]))
     server = make_server(context, args.port)

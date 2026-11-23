@@ -3,8 +3,10 @@ import tempfile
 from pathlib import Path
 
 import cv2
+import numpy as np
 
 from .data import probe
+from .automatic import sample_path
 
 # Shared visual geometry: browser viewBox is always 1280 x 720.
 COLORS = {"completed": (148, 212, 100), "intercepted": (103, 107, 255),
@@ -18,6 +20,38 @@ def draw_events(frame, timestamp, events):
     for event in events:
         if not event["reviewed"] or not event["start"] <= timestamp <= event["end"]:
             continue
+        if event.get("provenance") == "automatic" and event.get("trajectory"):
+            path = event["trajectory"]
+            sample = sample_path(path, timestamp)
+            if sample is None:
+                continue
+            cyan = (220, 234, 39)
+            center = tuple(round(v * d) for v, d in zip(sample["position"], (width, height)))
+            if event["kind"] == "possession":
+                team_hex = sample.get("team_color") or "#b6bdb9"
+                team_color = tuple(int(team_hex[i:i + 2], 16) for i in (5, 3, 1))
+                radius = max(18, min(42, sample.get("width", .025) * 1280 * .9))
+                axes = (round(radius * scale), max(1, round(radius * .29 * scale)))
+                cv2.ellipse(frame, center, axes, 0, -30, 240, team_color, max(1, round(2.4 * scale)), cv2.LINE_AA)
+                top = center[1] - round((sample.get("height", .09) * 720 + 10) * scale)
+                triangle = np.array([[center[0] - round(6 * scale), top - round(9 * scale)],
+                                     [center[0] + round(6 * scale), top - round(9 * scale)],
+                                     [center[0], top]], dtype=np.int32)
+                cv2.fillConvexPoly(frame, triangle, team_color, cv2.LINE_AA)
+            else:
+                points = [p for p in path if timestamp - .4 <= p["time"] < timestamp]
+                points.append(dict(sample, time=timestamp))
+                for a, b in zip(points, points[1:]):
+                    if (b["time"] - a["time"] > .21 or a["segment"] != b["segment"] or
+                            a.get("track") != b.get("track")):
+                        continue
+                    start = tuple(round(v * d) for v, d in zip(a["position"], (width, height)))
+                    end = tuple(round(v * d) for v, d in zip(b["position"], (width, height)))
+                    alpha = max(0, 1 - (timestamp - b["time"]) / .4)
+                    trail = frame.copy()
+                    cv2.line(trail, start, end, cyan, max(1, round(8 * scale)), cv2.LINE_AA)
+                    cv2.addWeighted(trail, alpha * .35, frame, 1 - alpha * .35, 0, dst=frame)
+            continue
         source = tuple(round(v * d) for v, d in zip(event["source"], (width, height)))
         target = tuple(round(v * d) for v, d in zip(event["target"], (width, height)))
         color = COLORS[event["outcome"]] if event["kind"] == "pass" else (78, 176, 255)
@@ -29,7 +63,7 @@ def draw_events(frame, timestamp, events):
             progress = (timestamp - event["start"]) / (event["end"] - event["start"])
             center = tuple(round(a + (b - a) * progress) for a, b in zip(source, target))
         cv2.ellipse(frame, center, (max(2, round(23 * scale)), max(1, round(8 * scale))),
-                    0, 0, 360, color, thickness, cv2.LINE_AA)
+                    0, -30, 240, color, thickness, cv2.LINE_AA)
     return frame
 
 
